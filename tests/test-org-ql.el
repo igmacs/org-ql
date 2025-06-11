@@ -2359,6 +2359,18 @@ with keyword arg NOW in PLIST."
                                               :buffer link-buffer)
                     :to-throw 'user-error '("Views that search non-file-backed buffers can't be linked to"))))))
 
+    (describe "org-ql-select with :limit"
+      
+      (it "returns only N results when :limit is given"
+        (org-ql-expect ('(ancestors))
+          '("Take over the world" "Skype with president of Antarctica" "Take over Mars" "Visit Mars" "Take over the moon" "Visit the moon" "Practice leaping tall buildings in a single bound" "Renew membership in supervillain club" "Learn universal sign language" "/r/emacs" "Shop for groceries" "Sunrise/sunset" "Rewrite Emacs in Common Lisp" "Write a symphony"))
+        (org-ql-expect ('(ancestors) :limit 3)
+          '("Take over the world" "Skype with president of Antarctica" "Take over Mars")))
+
+      (it "returns all results when :limit is nil"
+        (org-ql-expect ('(ancestors) :limit nil)
+          '("Take over the world" "Skype with president of Antarctica" "Take over Mars" "Visit Mars" "Take over the moon" "Visit the moon" "Practice leaping tall buildings in a single bound" "Renew membership in supervillain club" "Learn universal sign language" "/r/emacs" "Shop for groceries" "Sunrise/sunset" "Rewrite Emacs in Common Lisp" "Write a symphony"))))
+    
     ;; MAYBE: Also test `org-ql-views', although I already know it works now.
     ;; (describe "org-ql-views")
     ))

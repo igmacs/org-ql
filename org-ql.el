@@ -333,7 +333,7 @@ See Info node `(org-ql)Queries'."
                                                     (sxhash-equal (prin1-to-string args))))
 
 ;;;###autoload
-(cl-defun org-ql-select (buffers-or-files query &key action narrow sort)
+(cl-defun org-ql-select (buffers-or-files query &key action narrow sort limit)
   "Return items matching QUERY in BUFFERS-OR-FILES.
 
 BUFFERS-OR-FILES is a file or buffer, a list of files and/or
@@ -367,6 +367,9 @@ user-defined comparator function that accepts two items as
 arguments and returns nil or non-nil.  Sorting methods are
 applied in the order given (i.e. later methods override earlier
 ones), and `reverse' may be used more than once.
+
+LIMIT is an non-negative integer used to limit the final number of results
+produced.
 
 For example, `(date priority)' would present items with the
 highest priority first, and within each priority the oldest items
@@ -437,17 +440,19 @@ each priority the newest items would appear first."
                        (-let (((&plist :name :fn) it))
                          (fset name fn)))))))
     ;; Sort items
-    (pcase sort
-      (`nil items)
-      ((guard (cl-subsetp (-list sort) '(date deadline scheduled closed todo priority random reverse)))
-       ;; Default sorting functions
-       (org-ql--sort-by items (-list sort)))
-      ;; Sort by user-given comparator.
-      ((pred functionp) (-sort sort items))
-      (_ (user-error "SORT must be either nil, one or a list of the defined sorting methods (see documentation), or a comparison function of two arguments")))))
+    (setq items (pcase sort
+                  (`nil items)
+                  ((guard (cl-subsetp (-list sort) '(date deadline scheduled closed todo priority random reverse)))
+                   ;; Default sorting functions
+                   (org-ql--sort-by items (-list sort)))
+                  ;; Sort by user-given comparator.
+                  ((pred functionp) (-sort sort items))
+                  (_ (user-error "SORT must be either nil, one or a list of the defined sorting methods (see documentation), or a comparison function of two arguments"))))
+    ;; Limit items
+    (if limit (-take limit items) items)))
 
 ;;;###autoload
-(cl-defun org-ql-query (&key (select 'element-with-markers) from where narrow order-by)
+(cl-defun org-ql-query (&key (select 'element-with-markers) from where narrow order-by limit)
   "Like `org-ql-select', but arguments are named more like a SQL query.
 
 SELECT corresponds to the `org-ql-select' argument ACTION.  It is
@@ -475,12 +480,15 @@ should be an `org-ql' query sexp.
 ORDER-BY corresponds to the `org-ql-select' argument SORT, which
 see.
 
-NARROW corresponds to the `org-ql-select' argument NARROW."
+NARROW corresponds to the `org-ql-select' argument NARROW.
+
+LIMIT corresponds to the `org-ql-select' argument LIMIT."
   (declare (indent 0))
   (org-ql-select from where
     :action select
     :narrow narrow
-    :sort order-by))
+    :sort order-by
+    :limit limit))
 
 (defun org-ql--select-cached (&rest args)
   "Return results for ARGS and current buffer using cache."

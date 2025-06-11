@@ -104,6 +104,7 @@ Based on `org-agenda-mode-map'.")
 (defvar-local org-ql-view-buffers-files nil)
 (defvar-local org-ql-view-query nil)
 (defvar-local org-ql-view-sort nil)
+(defvar-local org-ql-view-limit nil)
 (defvar-local org-ql-view-narrow nil)
 (defvar-local org-ql-view-super-groups nil)
 (defvar-local org-ql-view-title nil)
@@ -341,6 +342,7 @@ update search arguments."
          (defaults (list org-ql-view-buffers-files
                          org-ql-view-query
                          :sort org-ql-view-sort
+                         :limit org-ql-view-limit
                          :narrow org-ql-view-narrow
                          :super-groups org-ql-view-super-groups
                          :title org-ql-view-title))
@@ -401,6 +403,7 @@ update search arguments."
     (list :buffers-files org-ql-view-buffers-files
           :query org-ql-view-query
           :sort org-ql-view-sort
+          :limit org-ql-view-limit
           :narrow org-ql-view-narrow
           :super-groups org-ql-view-super-groups
           :title org-ql-view-title)))
@@ -438,11 +441,11 @@ HEADER is a string displayed in the buffer's header line.
 The following special variables, if non-nil, are set
 buffer-locally to preserve their value in the buffer for
 subsequent refreshing of the buffer: `org-ql-view-buffers-files',
-`org-ql-view-query', `org-ql-view-sort', `org-ql-view-narrow',
-`org-ql-view-super-groups', `org-ql-title.'"
+`org-ql-view-query', `org-ql-view-sort', `org-ql-view-limit',
+`org-ql-view-narrow', `org-ql-view-super-groups', `org-ql-title.'"
   (declare (indent defun))
   (let* ((vars (list 'org-ql-view-buffers-files 'org-ql-view-query
-                     'org-ql-view-sort 'org-ql-view-narrow
+                     'org-ql-view-sort 'org-ql-view-limit 'org-ql-view-narrow
                      'org-ql-view-super-groups 'org-ql-view-title))
          ;; Save the values of variables which are set buffer-locally in the
          ;; results buffer, which we want to override and set buffer-locally again.
@@ -729,6 +732,8 @@ When opened, the link searches the buffer it's opened from."
                              (list "super-groups" (prin1-to-string org-ql-view-super-groups)))
                            (when org-ql-view-sort
                              (list "sort" (prin1-to-string org-ql-view-sort)))
+                           (when org-ql-view-limit
+                             (list "limit" (prin1-to-string org-ql-view-limit)))
                            (when org-ql-view-title
                              (list "title" (prin1-to-string org-ql-view-title)))))
              (filename (concat (url-hexify-string query-string)
@@ -773,6 +778,7 @@ When opened, the link searches the buffer it's opened from."
     ("q" org-ql-view--transient-query)
     ("i" org-ql-view--transient-in)
     ("s" org-ql-view--transient-sort)
+    ("l" org-ql-view--transient-limit)
     ("g" org-ql-view--transient-super-groups)]]
   [["View"
     ("r" "Refresh" org-ql-view-refresh)
@@ -866,6 +872,19 @@ When opened, the link searches the buffer it's opened from."
             ;; FIXME: Figure out how to integrate initial-input and history.
             (org-ql-view--complete-sort)))
 
+
+(transient-define-infix org-ql-view--transient-limit ()
+  :description (lambda () (org-ql-view--format-transient-key-value "Limit by" org-ql-view-limit))
+  :class 'org-ql-view--variable
+  :argument ""
+  :variable 'org-ql-view-limit
+  :prompt "Limit: "
+  :reader (lambda (prompt _initial-input history)
+            (string-to-number
+             (read-string prompt (when org-ql-view-limit
+                                   (format "%s" org-ql-view-limit))
+                          history))))
+
 ;;;; Faces/properties
 
 (defalias 'org-ql-view--resolve-element-properties
@@ -913,7 +932,7 @@ return an empty string."
            ;; Adding the relative due date property should probably be done explicitly and separately
            ;; (which would also make it easier to do it independently of faces, etc).
            (title (--> (org-ql-view--add-faces element)
-                       (org-element-property :raw-value it)))
+                     (org-element-property :raw-value it)))
            ;; TODO(B): Needs refactoring.  A function like `org-ql-view--add-faces'
            ;; should return a list of faces to be added.
            (title-faces (get-text-property 0 'face title))
@@ -939,17 +958,17 @@ return an empty string."
                        (org-element-property :tags element)))
            (tag-string (when tag-list
                          (--> tag-list
-                              (s-join ":" it)
-                              (s-wrap it ":")
-                              (org-add-props it nil 'face 'org-tag))))
+                            (s-join ":" it)
+                            (s-wrap it ":")
+                            (org-add-props it nil 'face 'org-tag))))
            (category (or (org-element-property :CATEGORY element)
                          (when-let ((marker (or (org-element-property :org-hd-marker element)
                                                 (org-element-property :org-marker element))))
                            (org-with-point-at marker
                              (or (org-get-category)
                                  (when buffer-file-name
-			           (file-name-sans-extension
-			            (file-name-nondirectory buffer-file-name))))))
+			                       (file-name-sans-extension
+			                        (file-name-nondirectory buffer-file-name))))))
                          ""))
            (priority-string (-some->> (org-element-property :priority element)
                               (char-to-string)

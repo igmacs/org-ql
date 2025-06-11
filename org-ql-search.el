@@ -149,7 +149,7 @@ Runs `org-occur-hook' after making the sparse tree."
       num-results)))
 
 ;;;###autoload
-(cl-defun org-ql-search (buffers-files query &key narrow super-groups sort title
+(cl-defun org-ql-search (buffers-files query &key narrow super-groups sort title limit
                                        (buffer org-ql-view-buffer))
   "Search for QUERY with `org-ql'.
 Interactively, prompt for these variables:
@@ -205,7 +205,8 @@ necessary."
            (results (org-ql-select buffers-files query
                       :action 'element-with-markers
                       :narrow narrow
-                      :sort sort))
+                      :sort sort
+                      :limit limit))
            (strings (-map #'org-ql-view--format-element results))
            (buffer (or buffer (format "%s %s*" org-ql-view-buffer-name-prefix (or title query))))
            (header (org-ql-view--header-line-format
@@ -214,7 +215,8 @@ necessary."
            (org-ql-view-buffers-files buffers-files)
            (org-ql-view-query query)
            (org-ql-view-sort sort)
-           (org-ql-view-narrow narrow)
+           (org-ql-view-sort sort)
+           (org-ql-view-limit limit)
            (org-ql-view-super-groups super-groups)
            (org-ql-view-title title))
       (when super-groups
