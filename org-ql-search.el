@@ -244,21 +244,20 @@ string for the block, otherwise the header is formed
 automatically from the query."
   (pcase-let ((`(,query . ,(map :header :sort)) args)
               (narrow-p) (old-beg) (old-end))
-    (when-let* ((from (pcase org-agenda-restrict
-                        ('nil (org-agenda-files nil 'ifmode))
-                        (_ (prog1 org-agenda-restrict
-                             (with-current-buffer org-agenda-restrict
-			       ;; Narrow the buffer; remember to widen it later.
-			       (setf old-beg (point-min) old-end (point-max)
-                                     narrow-p t)
-			       (narrow-to-region org-agenda-restrict-begin org-agenda-restrict-end))))))
-                (items (org-ql-select from query
-                         :action 'element-with-markers
-                         :narrow narrow-p :sort sort)))
-      (when narrow-p
-        ;; Restore buffer's previous restrictions.
-        (with-current-buffer from
-          (narrow-to-region old-beg old-end)))
+    (when (bufferp org-agenda-restrict)
+      (with-current-buffer org-agenda-restrict
+        ;; Narrow the buffer; remember to widen it later.
+        (setf old-beg (point-min) old-end (point-max)
+              narrow-p t)
+        (narrow-to-region org-agenda-restrict-begin org-agenda-restrict-end)))
+    (when-let* ((from (org-agenda-files nil 'ifmode)) ;; Handles agenda restrictions automatically
+                (items (prog1 (org-ql-select from query
+                                :action 'element-with-markers
+                                :narrow narrow-p :sort sort)
+                         (when narrow-p
+                           ;; Restore buffer's previous restrictions.
+                           (with-current-buffer org-agenda-restrict
+                             (narrow-to-region old-beg old-end))))))
       ;; Not sure if calling the prepare function is necessary, but let's follow the pattern.
       (org-agenda-prepare)
       ;; FIXME: `org-agenda--insert-overriding-header' is from an Org version newer than
