@@ -244,7 +244,7 @@ function `org-agenda-files'.  Inserts a newline after the block.
 If `org-ql-block-header' is non-nil, it is used as the header
 string for the block, otherwise the header is formed
 automatically from the query."
-  (pcase-let ((`(,query . ,(map :header :sort)) args)
+  (pcase-let ((`(,query . ,(map :header :sort :limit)) args)
               (narrow-p) (old-beg) (old-end))
     (when (bufferp org-agenda-restrict)
       (with-current-buffer org-agenda-restrict
@@ -255,7 +255,7 @@ automatically from the query."
     (when-let* ((from (org-agenda-files nil 'ifmode)) ;; Handles agenda restrictions automatically
                 (items (prog1 (org-ql-select from query
                                 :action 'element-with-markers
-                                :narrow narrow-p :sort sort)
+                                :narrow narrow-p :sort sort :limit limit)
                          (when narrow-p
                            ;; Restore buffer's previous restrictions.
                            (with-current-buffer org-agenda-restrict
