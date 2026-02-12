@@ -1321,6 +1321,7 @@ result form."
                     ("-"
                      ;; Ignore, because it means the user is typing a negative number.
                      nil)
+                    ((or 'now "now") (ts-now))
                     ((or 'today "today") (->> (ts-now)
                                               (ts-apply :hour 0 :minute 0 :second 0)))
                     ((pred numberp) (->> (ts-now)
@@ -1340,6 +1341,7 @@ result form."
                   ("-"
                    ;; Ignore, because it means the user is typing a negative number.
                    nil)
+                  ((or 'now "now") (ts-now))
                   ((or 'today "today") (->> (ts-now)
                                             (ts-apply :hour 23 :minute 59 :second 59)))
                   ((pred numberp) (->> (ts-now)

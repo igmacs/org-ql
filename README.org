@@ -283,7 +283,7 @@ These predicates take optional keyword arguments:
 +  ~:on~: Match entries whose timestamp is on date ~:on~.
 +  ~:with-time~: If unspecified, match timestamps with or without times (i.e. HH:MM).  If nil, match timestamps without times.  If t, match timestamps with times.
 
-Timestamp/date arguments should be either a number of days (positive to look forward, or negative to look backward), a string parseable by ~parse-time-string~ (the string may omit the time value), the symbol ~today~, or a ~ts~ struct.
+Timestamp/date arguments should be either a number of days (positive to look forward, or negative to look backward), a string parseable by ~parse-time-string~ (the string may omit the time value), the symbols ~today~ or ~now~, or a ~ts~ struct.
 
 +  *Predicates*
      -  =ts= :: Return non-nil if current entry has a timestamp in given period.  Without arguments, return non-nil if entry has a timestamp.
