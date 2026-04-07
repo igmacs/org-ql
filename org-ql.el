@@ -2521,12 +2521,9 @@ A and B are Org headline elements."
   (cl-macrolet ((priority (item)
                   `(org-element-property :priority ,item)))
     ;; NOTE: Priorities are numbers in Org elements.  This might differ from the priority selector logic.
-    (let ((a-priority (priority a))
-          (b-priority (priority b)))
-      (cond ((and a-priority b-priority)
-             (< a-priority b-priority))
-            (a-priority t)
-            (b-priority nil)))))
+    (let ((a-priority (or (priority a) org-default-priority))
+          (b-priority (or (priority b) org-default-priority)))
+      (< a-priority b-priority))))
 
 (defun org-ql--infix-p (infix list)
   "Return non-nil if INFIX is an infix of LIST.
